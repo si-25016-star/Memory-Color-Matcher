@@ -43,42 +43,95 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+
+/* BACKGROUND UTAMA */
 .stApp {
-    background: linear-gradient(135deg, #E3F2FD, #F3E5F5);
+    background: #FFFFFF;
 }
-h1, h2, h3, p, label {
-    color: #263238;
+
+/* AREA KONTEN */
+.block-container {
+    max-width: 1000px;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
 }
-div.stButton > button {
-    width: 100%;
-    min-height: 48px;
-    border-radius: 12px;
+
+/* JUDUL GAME */
+h1 {
+    text-align: center;
+    color: #673AB7 !important;
+    font-size: 30px !important;
     font-weight: bold;
 }
+
+/* TEKS */
+h2, h3, p, label {
+    color: #263238;
+}
+
+/* KARTU GAME */
 .game-card {
-    background: white;
-    padding: 22px;
-    border-radius: 16px;
+    background: #E3F2FD;
+    padding: 25px;
+    border-radius: 18px;
     text-align: center;
     margin-bottom: 15px;
 }
+
+/* KARTU PUTIH */
+.white-card {
+    background: white;
+    padding: 20px;
+    border-radius: 14px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* TOMBOL */
+div.stButton > button {
+    width: 100%;
+    min-height: 50px;
+    border-radius: 0px;
+    font-weight: bold;
+    border: none;
+    transition: 0.2s;
+}
+
+/* EFEK SAAT KURSOR DI ATAS TOMBOL */
+div.stButton > button:hover {
+    transform: scale(1.03);
+    border: 2px solid white;
+}
+
+/* KARTU SKOR */
+[data-testid="stMetric"] {
+    background: white;
+    padding: 15px;
+    border-radius: 14px;
+    text-align: center;
+}
+
+/* PROGRESS BAR */
+[data-testid="stProgressBar"] {
+    margin-bottom: 15px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-
-
 def suara_game(jenis="klik"):
-    """Memainkan efek suara di browser."""
+    """Memainkan efek suara menggunakan Web Audio API."""
 
     daftar_nada = {
-        "klik": [(500, 0.12)],
+        "klik": [(700, 0.12)],
         "mulai": [(600, 0.15), (800, 0.20)],
-        "benar": [(600, 0.16), (800, 0.16), (1100, 0.35)],
-        "salah": [(300, 0.25), (180, 0.40)],
+        "benar": [(600, 0.16), (800, 0.16), (1100, 0.30)],
+        "salah": [(300, 0.20), (180, 0.35)],
         "ronde": [(700, 0.12), (900, 0.12), (1200, 0.25)]
     }
 
     nada = daftar_nada.get(jenis, daftar_nada["klik"])
+
     daftar_js = ",".join(
         f"{{freq:{frekuensi}, dur:{durasi}}}"
         for frekuensi, durasi in nada
@@ -86,18 +139,18 @@ def suara_game(jenis="klik"):
 
     components.html(
         f"""
-        <button id="play" style="display:none">Play</button>
         <script>
-        (async () => {{
+        (async function() {{
             try {{
-                const ctx = new (
+                const AudioContextClass =
                     window.AudioContext ||
-                    window.webkitAudioContext
-                )();
+                    window.webkitAudioContext;
 
-                if (ctx.state === "suspended") {{
-                    await ctx.resume();
-                }}
+                if (!AudioContextClass) return;
+
+                const ctx = new AudioContextClass();
+
+                await ctx.resume();
 
                 const notes = [{daftar_js}];
                 let waktu = ctx.currentTime;
@@ -107,13 +160,14 @@ def suara_game(jenis="klik"):
                     const gain = ctx.createGain();
 
                     oscillator.type = "sine";
-                    oscillator.frequency.setValueAtTime(
-                        n.freq, waktu
-                    );
+                    oscillator.frequency.value = n.freq;
 
                     gain.gain.setValueAtTime(0.001, waktu);
                     gain.gain.linearRampToValueAtTime(
-                        0.15, waktu + 0.02
+                        0.20, waktu + 0.02
+                    );
+                    gain.gain.setValueAtTime(
+                        0.20, waktu + n.dur * 0.5
                     );
                     gain.gain.exponentialRampToValueAtTime(
                         0.001, waktu + n.dur
@@ -125,12 +179,13 @@ def suara_game(jenis="klik"):
                     oscillator.start(waktu);
                     oscillator.stop(waktu + n.dur);
 
-                    waktu += n.dur;
+                    waktu += n.dur + 0.04;
                 }});
 
                 setTimeout(() => ctx.close(), 2000);
-            }} catch (e) {{
-                console.log("Audio tidak tersedia:", e);
+
+            }} catch (error) {{
+                console.error("Gagal memutar suara:", error);
             }}
         }})();
         </script>
@@ -274,56 +329,97 @@ elif st.session_state.fase == "tampil_pola":
     st.session_state.fase = "pilihan"
     st.rerun()
 
-
 # ============================================================
 # 8. MEMILIH WARNA
 # ============================================================
 
 elif st.session_state.fase == "pilihan":
-    st.warning("🙈 Pola disembunyikan! Pilih warna sesuai urutan.")
-    st.markdown("### ❓ ❓ ❓ ❓")
+
+    st.markdown("""
+    <div style="
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 15px;
+    ">
+        <h3 style="color: #F1C40F;">
+            🙈 POLA SUDAH DISEMBUNYIKAN!
+        </h3>
+        <h1 style="color: #FF3366;">
+            ❓ ❓ ❓ ❓
+        </h1>
+    </div>
+    """, unsafe_allow_html=True)
 
     if st.session_state.input_pemain:
         jawaban_sementara = " → ".join(
             EMOJI_WARNA[w]
             for w in st.session_state.input_pemain
         )
+
         st.write("Pilihan kamu:", jawaban_sementara)
 
     st.write("Tekan warna satu per satu:")
 
-    kolom_warna = st.columns(2)
+    kolom_warna = st.columns(4)
 
     for i, warna in enumerate(DAFTAR_WARNA):
-        with kolom_warna[i % 2]:
+
+        with kolom_warna[i]:
+
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: {HEX_WARNA[warna]};
+                    color: black;
+                    padding: 10px 2px;
+                    text-align: center;
+                    border-radius: 5px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                ">
+                    {EMOJI_WARNA[warna]} {warna}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
             if st.button(
-                f"{EMOJI_WARNA[warna]} {warna}",
+                f"Pilih {warna}",
                 key=f"warna_{warna}",
                 use_container_width=True
             ):
-                suara_game("klik")
 
                 posisi = len(st.session_state.input_pemain)
                 warna_benar = st.session_state.pola_target[posisi]
 
                 if warna != warna_benar:
+
                     st.session_state.input_pemain.append(warna)
                     st.session_state.fase = "game_over"
                     suara_game("salah")
+
                 else:
+
                     st.session_state.input_pemain.append(warna)
 
                     if len(st.session_state.input_pemain) == PANJANG_POLA:
+
                         st.session_state.skor += POIN_BENAR
+
                         st.session_state.best_skor = max(
                             st.session_state.best_skor,
                             st.session_state.skor
                         )
+
                         st.session_state.fase = "hasil_benar"
                         suara_game("benar")
 
-                st.rerun()
+                    else:
+                        suara_game("klik")
 
+                st.rerun()
 
 # ============================================================
 # 9. HASIL JAWABAN BENAR DAN LANJUT RONDE
