@@ -329,35 +329,20 @@ elif st.session_state.fase == "tampil_pola":
     st.session_state.fase = "pilihan"
     st.rerun()
 
+
 # ============================================================
 # 8. MEMILIH WARNA
 # ============================================================
 
 elif st.session_state.fase == "pilihan":
-
-    st.markdown("""
-    <div style="
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        text-align: center;
-        margin-bottom: 15px;
-    ">
-        <h3 style="color: #F1C40F;">
-            🙈 POLA SUDAH DISEMBUNYIKAN!
-        </h3>
-        <h1 style="color: #FF3366;">
-            ❓ ❓ ❓ ❓
-        </h1>
-    </div>
-    """, unsafe_allow_html=True)
+    st.warning("🙈 Pola disembunyikan! Pilih warna sesuai urutan.")
+    st.markdown("### ❓ ❓ ❓ ❓")
 
     if st.session_state.input_pemain:
         jawaban_sementara = " → ".join(
             EMOJI_WARNA[w]
             for w in st.session_state.input_pemain
         )
-
         st.write("Pilihan kamu:", jawaban_sementara)
 
     st.write("Tekan warna satu per satu:")
@@ -365,59 +350,43 @@ elif st.session_state.fase == "pilihan":
     kolom_warna = st.columns(4)
 
     for i, warna in enumerate(DAFTAR_WARNA):
-
         with kolom_warna[i]:
-
             st.markdown(
-                f"""
-                <div style="
-                    background-color: {HEX_WARNA[warna]};
-                    color: black;
-                    padding: 10px 2px;
-                    text-align: center;
-                    border-radius: 5px;
-                    font-weight: bold;
-                    margin-bottom: 5px;
-                ">
-                    {EMOJI_WARNA[warna]} {warna}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            f"""
+            <style>
+            div.stButton button[kind="secondary"] {{
+                font-weight: bold;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
 
             if st.button(
-                f"Pilih {warna}",
-                key=f"warna_{warna}",
-                use_container_width=True
-            ):
+            f"{EMOJI_WARNA[warna]} {warna}",
+            key=f"warna_{warna}",
+            use_container_width=True
+        ):
+                suara_game("klik")
 
                 posisi = len(st.session_state.input_pemain)
                 warna_benar = st.session_state.pola_target[posisi]
 
                 if warna != warna_benar:
-
                     st.session_state.input_pemain.append(warna)
                     st.session_state.fase = "game_over"
-                    suara_game("salah")
+                suara_game("salah")
+            else:
+                st.session_state.input_pemain.append(warna)
 
-                else:
-
-                    st.session_state.input_pemain.append(warna)
-
-                    if len(st.session_state.input_pemain) == PANJANG_POLA:
-
-                        st.session_state.skor += POIN_BENAR
-
-                        st.session_state.best_skor = max(
-                            st.session_state.best_skor,
-                            st.session_state.skor
-                        )
-
-                        st.session_state.fase = "hasil_benar"
-                        suara_game("benar")
-
-                    else:
-                        suara_game("klik")
+                if len(st.session_state.input_pemain) == PANJANG_POLA:
+                    st.session_state.skor += POIN_BENAR
+                    st.session_state.best_skor = max(
+                        st.session_state.best_skor,
+                        st.session_state.skor
+                    )
+                    st.session_state.fase = "hasil_benar"
+                    suara_game("benar")
 
                 st.rerun()
 
